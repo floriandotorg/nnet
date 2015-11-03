@@ -1,0 +1,23 @@
+{
+  "name": "nnet",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ls",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "ascii-table": "0.0.8",
+    "async": "^1.5.0",
+    "livescript": "^1.4.0",
+    "prelude-ls": "^1.1.2",
+    "random-js": "^1.0.8",
+    "synaptic": "^1.0.2"
+  },
+  "peerDependencies": {
+    "livescript": "^1.4.0"
+  }
+}
