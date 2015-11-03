@@ -1,14 +1,18 @@
 require! {
   'ascii-table': AsciiTable
-  'prelude-ls': {map, sort-by}
+  'prelude-ls': {map, sort-by, take, concat, last}
   async
   child_process: {exec}
   'random-js': Random
 }
 
+const POPULATION_SIZE = 10
+const MUTATE_PROBABILITY = 0.3
+const CROSSOVER_PROBABILITY = 0.5
+
 rand = new Random!
 
-global.population = map (-> [rand.integer(1,10), rand.integer(1000,100000), rand.real(0.01, 0.00001)]), [1 to 20]
+global.population = map (-> [rand.integer(1,10), rand.integer(1000,100000), rand.real(0.01, 0.00001)]), [1 to POPULATION_SIZE]
 
 const crossover = ->
   c = []
@@ -20,7 +24,7 @@ const crossover = ->
   return c
 
 const mutate = ->
-  const m = -> &0 + &0 * Math.random() * 0.05 * (if Math.random() > 0.5 then -1 else 1)
+  const m = -> &0 + &0 * Math.random() * 0.4 * (if Math.random() > 0.5 then -1 else 1)
   &0.0 = Math.round(m(&0.0))
   &0.1 = Math.round(m(&0.1))
   &0.2 = m(&0.2)
@@ -40,15 +44,29 @@ const printPopulation = ->
   table.addRowMatrix(map (-> [&0.0, &0.1.0, &0.1.1, &0.1.2]), &0)
   console.log table.toString!
 
+global.min = [1,[]]
+
 async.forever (next) ->
   async.map global.population, fit, (err, res) ->
-    const np = sort-by (.0), res
+    const p = sort-by (.0), res
+    printPopulation(p)
 
-    printPopulation(np)
+    global.min = if p.0.0 < global.min.0 then p.0 else global.min
+    console.dir global.min
 
-    newp = []
-    for from 0 to global.population.length-1
-      newp.push mutate(crossover(np.0.1, np.1.1))
+    newp = map (.1), concat [(take Math.floor(POPULATION_SIZE/4), p), [last p]]
+    const nps = newp.length-1
+
+    while newp.length < POPULATION_SIZE
+      if Math.random() > CROSSOVER_PROBABILITY
+        child = crossover newp[rand.integer(0, nps)], newp[rand.integer(0, nps)]
+      else
+        child = newp[rand.integer(0, nps)]
+
+      if Math.random() > MUTATE_PROBABILITY
+        child = mutate child
+
+      newp.push child
 
     global.population = newp
 
