@@ -16,6 +16,7 @@ export class Task
   run: (cb = !->) !->
     cb = cb.bind(@)
 
+    @results = [0] * @populationSize
     async.map [1 to @populationSize], @generate, (err, @population) !~>
       return cb(err) if err
       @printStats!
@@ -27,23 +28,23 @@ export class Task
           const pop = sort-by (.0), zip res, @population
           @best = pop.0 if pop.0.0 < @best.0
 
-          global.newp = map (.1), (take floor(@populationSize/4), pop) ++ [last(pop)]
-          const nps = global.newp.length-1
+          @results = map (.0), pop
+          @population = map (.1), (take floor(@populationSize/4), pop) ++ [last(pop)]
+          const nps = @population.length-1
 
-          async.whilst (~> global.newp.length < @populationSize), (end) ~>
+          async.whilst (~> @population.length < @populationSize), (end) ~>
             aif (~> Math.random! > @crossoverProbability)
-            , !~> @crossover &0, global.newp[rand.integer(0, nps)], global.newp[rand.integer(0, nps)]
-            , !-> &0(global.newp[rand.integer(0, nps)])
+            , !~> @crossover &0, @population[rand.integer(0, nps)], @population[rand.integer(0, nps)]
+            , !~> &0(@population[rand.integer(0, nps)])
             , (child) ~>
               aif (~> Math.random! > @mutateProbability)
               , !~> @mutate &0, child
               , !-> &0(child)
               , (child) !~>
-                valid <- @isValid child
-                global.newp.push child if &0
+                valid <~ @isValid child
+                @population.push child if valid
                 end!
           , !~>
-            @population = global.newp
             @printStats!
-            setInterval(next)
+            setTimeout(next)
       , @stopCriteria.bind(@), (!-> cb(&0))
